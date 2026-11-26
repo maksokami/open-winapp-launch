@@ -19,7 +19,7 @@ slint = { version = "1.13", default-features = false, features = ["std", "compat
 [target.'cfg(windows)'.dependencies]
 global-hotkey = "0.10"
 raw-window-handle = "0.6"
-tray-icon = "0.21"
+tray-icon = "0.26"
 windows = { version = "0.62", features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
