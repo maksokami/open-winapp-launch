@@ -1,0 +1,250 @@
+import { Button, CheckBox, LineEdit } from "std-widgets.slint";
+
+export struct AppItem {
+    name: string,
+    group: string,
+    path: string,
+    icon: image,
+    missing: bool,
+    initial: string,
+}
+
+export component MainWindow inherits Window {
+    title: "App Launcher";
+    out property <length> launcher-width: 704px;
+    out property <length> launcher-height: 457px + (error-text != "" ? 38px : 0px);
+    preferred-width: launcher-width;
+    preferred-height: launcher-height;
+    min-width: launcher-width;
+    max-width: launcher-width;
+    min-height: launcher-height;
+    max-height: launcher-height;
+    background: #f5f5f5;
+    always-on-top: true;
+    no-frame: true;
+
+    in-out property <[AppItem]> apps;
+    in-out property <[string]> groups;
+    in-out property <string> query;
+    in-out property <string> error-text;
+    in-out property <bool> settings-visible;
+    in-out property <bool> autostart;
+    in-out property <int> active-group;
+    in-out property <string> hotkey;
+    in property <int> active-page;
+    in property <int> page-count: 1;
+
+    callback launch(int);
+    callback query-changed(string);
+    callback select-group(int);
+    callback autostart-changed(bool);
+    callback edit-config();
+    callback dismiss();
+    callback change-page(int);
+
+    FocusScope {
+        width: parent.width;
+        height: parent.height;
+
+        key-pressed(event) => {
+            if (event.text == Key.Escape) {
+                root.dismiss();
+                accept
+            } else {
+                reject
+            }
+        }
+
+        VerticalLayout {
+            spacing: 0px;
+
+            Rectangle {
+                background: white;
+                height: 72px;
+                HorizontalLayout {
+                    padding-left: 28px;
+                    padding-right: 28px;
+                    padding-top: 12px;
+                    padding-bottom: 12px;
+                    spacing: 16px;
+                    alignment: stretch;
+                    LineEdit {
+                        placeholder-text: "Search";
+                        text <=> root.query;
+                        edited(text) => { root.query-changed(text); }
+                        font-size: 17px;
+                        horizontal-stretch: 1;
+                        height: 48px;
+                    }
+                    Button {
+                        text: "⚙";
+                        width: 48px;
+                        height: 48px;
+                        clicked => { root.settings-visible = !root.settings-visible; }
+                    }
+                    Button {
+                        text: "×";
+                        width: 48px;
+                        height: 48px;
+                        clicked => { root.dismiss(); }
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 1px;
+                background: #d7d7d7;
+            }
+
+            HorizontalLayout {
+                height: 48px;
+                padding-left: 48px;
+                padding-right: 48px;
+                spacing: 0px;
+                for group[index] in groups: Rectangle {
+                    min-width: 90px;
+                    horizontal-stretch: 1;
+                    background: transparent;
+                    TouchArea {
+                        clicked => { root.select-group(index); }
+                    }
+                    Text {
+                        text: group;
+                        color: index == root.active-group ? #3799ff : #626262;
+                        font-size: 15px;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                    Rectangle {
+                        y: parent.height - 2px;
+                        height: 2px;
+                        width: parent.width;
+                        background: #3799ff;
+                        visible: index == root.active-group;
+                    }
+                }
+            }
+
+            if error-text != "": Rectangle {
+                height: 38px;
+                background: #fde7e9;
+                Text {
+                    text: error-text;
+                    color: #a4262c;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+
+            Rectangle {
+                height: 296px;
+                for app[index] in apps: Rectangle {
+                    x: 24px + Math.mod(index, 5) * 136px;
+                    y: 24px + floor(index / 5) * 136px;
+                    width: 112px;
+                    height: 112px;
+                    border-width: 1px;
+                    border-color: #dedede;
+                    border-radius: 12px;
+                    background: white;
+
+                    VerticalLayout {
+                        padding: 9.6px;
+                        spacing: 4px;
+                        alignment: center;
+                        HorizontalLayout {
+                            height: 62.4px;
+                            alignment: center;
+                            if app.icon.width > 0: Image {
+                                source: app.icon;
+                                image-fit: contain;
+                                width: 57.6px;
+                                height: 62.4px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                                opacity: app.missing ? 0.38 : 1;
+                            }
+                            if app.icon.width == 0: Text {
+                                text: app.initial;
+                                color: #3799ff;
+                                font-size: 30.4px;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                                width: 57.6px;
+                                height: 62.4px;
+                                opacity: app.missing ? 0.38 : 1;
+                            }
+                        }
+                        Text {
+                            text: app.name;
+                            color: app.missing ? #777777 : #111111;
+                            font-size: 13px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                            overflow: elide;
+                            max-width: parent.width;
+                        }
+                    }
+
+                    TouchArea {
+                        clicked => { root.launch(index); }
+                    }
+                }
+            }
+
+            Rectangle {
+                height: 40px;
+                if root.page-count > 1: HorizontalLayout {
+                    padding-left: 24px;
+                    padding-right: 24px;
+                    padding-bottom: 8px;
+                    spacing: 12px;
+                    Button {
+                        text: "Previous";
+                        enabled: root.active-page > 0;
+                        clicked => { root.change-page(root.active-page - 1); }
+                    }
+                    Text {
+                        text: (root.active-page + 1) + " / " + root.page-count;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        horizontal-stretch: 1;
+                    }
+                    Button {
+                        text: "Next";
+                        enabled: root.active-page + 1 < root.page-count;
+                        clicked => { root.change-page(root.active-page + 1); }
+                    }
+                }
+            }
+        }
+
+        if settings-visible: Rectangle {
+            x: parent.width - 330px;
+            y: 76px;
+            width: 300px;
+            height: 205px;
+            border-width: 1px;
+            border-color: #d7d7d7;
+            border-radius: 12px;
+            background: white;
+            drop-shadow-blur: 16px;
+            drop-shadow-color: #40000000;
+            VerticalLayout {
+                padding: 18px;
+                spacing: 12px;
+                Text { text: "Settings"; font-size: 18px; color: #202020; }
+                CheckBox {
+                    text: "Start with Windows";
+                    checked <=> root.autostart;
+                    toggled => { root.autostart-changed(self.checked); }
+                }
+                Button {
+                    text: "Open config file";
+                    clicked => { root.edit-config(); }
+                }
+                Text { text: "Hotkey: " + root.hotkey; color: #666666; font-size: 13px; }
+            }
+        }
+    }
+}

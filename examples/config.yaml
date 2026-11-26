@@ -1,0 +1,15 @@
+settings:
+  hotkey: "Ctrl+Alt+E"
+groups:
+  - name: Dev
+    apps:
+      - name: Visual Studio Code
+        path: 'C:\Program Files\Microsoft VS Code\Code.exe'
+        args: ['--new-window']
+        workdir: 'C:\Projects'
+  - name: Tools
+    apps:
+      - name: Notepad
+        path: '%SystemRoot%\System32\notepad.exe'
+      - name: Calculator
+        path: '%SystemRoot%\System32\calc.exe'
