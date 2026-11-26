@@ -17,7 +17,7 @@ serde_yaml_ng = "0.10"
 slint = { version = "1.13", default-features = false, features = ["std", "compat-1-2", "backend-winit", "renderer-software", "raw-window-handle-06"] }
 
 [target.'cfg(windows)'.dependencies]
-global-hotkey = "0.7"
+global-hotkey = "0.10"
 raw-window-handle = "0.6"
 tray-icon = "0.21"
 windows = { version = "0.62", features = [
