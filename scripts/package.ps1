@@ -16,18 +16,18 @@ try {
     if ($version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
         throw 'Packaging supports stable MAJOR.MINOR.PATCH versions only'
     }
-    $exe = 'target\x86_64-pc-windows-msvc\release\app-launcher.exe'
+    $exe = 'target\x86_64-pc-windows-msvc\release\open-winapp-launcher.exe'
     if (!(Test-Path $exe -PathType Leaf)) { throw "Build $exe first" }
     if (!(Test-Path $Iscc -PathType Leaf)) { throw "Inno Setup 6 compiler not found: $Iscc" }
     if (Test-Path dist) {
         throw 'dist already exists. Move or remove the previous dist directory before packaging to avoid mixing releases.'
     }
     New-Item -ItemType Directory dist | Out-Null
-    $portable = "dist\AppLauncher-$version-windows-x64"
+    $portable = "dist\open-winapp-launcher-$version-windows-x64"
     New-Item -ItemType Directory $portable | Out-Null
     cargo bundle-licenses --format json --output dist\THIRD_PARTY_LICENSES.json
     if ($LASTEXITCODE -ne 0) { throw 'Dependency license inventory failed' }
-    $source = "dist\AppLauncher-$version-source"
+    $source = "dist\open-winapp-launcher-$version-source"
     git archive --format=zip --output=dist\source-from-git.zip HEAD
     if ($LASTEXITCODE -ne 0) { throw 'Could not archive committed source; commit all release inputs first' }
     Expand-Archive dist\source-from-git.zip -DestinationPath $source
@@ -53,13 +53,13 @@ try {
             Copy-Item $_.FullName $destination
         }
     Copy-Item LICENSE "$notices\GPL-3.0-only.txt"
-    Copy-Item $exe "$portable\app-launcher.exe"
+    Copy-Item $exe "$portable\open-winapp-launcher.exe"
     Copy-Item LICENSE,README.md,THIRD_PARTY.md,dist\THIRD_PARTY_LICENSES.json $portable
     Copy-Item $notices "$portable\THIRD_PARTY_NOTICES" -Recurse
     Copy-Item examples "$portable\examples" -Recurse
     Copy-Item docs "$portable\docs" -Recurse
     Compress-Archive -Path "$portable\*" -DestinationPath "$portable.zip"
-    & $Iscc "/DAppVersion=$version" 'installer\applauncher.iss'
+    & $Iscc "/DAppVersion=$version" 'installer\open-winapp-launcher.iss'
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
     Get-ChildItem dist -File |
         Where-Object { $_.Extension -in '.exe', '.zip', '.json' } |

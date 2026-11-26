@@ -1,0 +1,88 @@
+name: Windows release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Windows x64
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate release tag and source branch
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_NAME -notmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+            throw "Use a stable vMAJOR.MINOR.PATCH tag"
+          }
+          git merge-base --is-ancestor HEAD origin/main
+          if ($LASTEXITCODE -ne 0) { throw "Release commit must already be on main" }
+          $metadata = cargo metadata --locked --no-deps --format-version 1 | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "cargo metadata failed" }
+          if ($env:GITHUB_REF_NAME -cne "v$($metadata.packages[0].version)") {
+            throw "Tag must match Cargo.toml version"
+          }
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Test
+        run: cargo test --locked --all-targets
+      - name: Lint
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Install security and license tools
+        shell: pwsh
+        run: |
+          cargo install cargo-audit --version 0.23.0 --locked
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cargo install cargo-bundle-licenses --version 5.0.0 --locked
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Audit dependencies
+        run: cargo audit
+      - name: Build
+        run: cargo build --locked --release --target x86_64-pc-windows-msvc
+      - name: Package portable app, installer, source, and checksums
+        shell: pwsh
+        run: .\scripts\package.ps1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: open-winapp-launcher-windows-x64
+          path: |
+            dist/*.exe
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/THIRD_PARTY_LICENSES.json
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Create draft release
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: open-winapp-launcher-windows-x64
+          path: release-assets
+      - name: Create draft with matching artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" release-assets/* \
+            --verify-tag --draft --title "App Launcher $RELEASE_TAG" \
+            --notes "Windows 11 x64 build. Download the Setup executable or portable ZIP. Binaries are unsigned; SHA256SUMS.txt detects transfer corruption, not publisher identity. Review the matching source ZIP and dependency license inventory before publishing. See docs/RELEASING.md for the smoke-test checklist."

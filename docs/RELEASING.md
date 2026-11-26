@@ -25,59 +25,8 @@ Builds run on `windows-2025` (a Windows Server CI image), targeting
 Windows 11 UI compatibility. Test on a real Windows 11 machine or VM before
 publishing. ARM64-native and 32-bit Windows are not release targets.
 
-## 2. Create and connect the repository
 
-The local folder has been initialized with an unborn `main` branch. No initial
-commit, remote, GitHub repository, or protection rules have been created for you.
-If starting from a fresh copy without `.git`, run `git init -b main` first.
-Install Git for Windows and GitHub CLI, or use GitHub's website for remote setup.
-Open PowerShell in the project root.
-
-1. Review every source/document/example for private data and ownership. The
-   historical design documents in `docs` are public too. `.gitignore` is not a
-   secret scanner, and adding a path there does not untrack previously committed
-   data. Never publish signing certificates or personal config.
-2. Verify `LICENSE` and `Cargo.toml` reflect the approved GPL-3.0-only choice.
-   GPL permits paid products; it does not impose a noncommercial restriction.
-3. Configure your identity if needed, replacing the example values:
-
-```powershell
-git config user.name "Your Name"
-git config user.email "your-public-or-github-noreply-address"
-git add .
-git diff --cached --stat
-git diff --cached
-git status --short
-```
-
-Check that `target`, `dist`, local configuration, and private files are absent.
-If a secret has ever been committed, revoke/rotate it before publication;
-removing it from the latest file does not erase history.
-
-```powershell
-git commit -m "Prepare App Launcher for public releases"
-gh auth login
-```
-
-Create an **empty public** repository on GitHub (do not pre-create its README,
-license, or gitignore), then use the exact remote URL GitHub supplies:
-
-```powershell
-git remote add origin https://github.com/YOUR-OWNER/YOUR-REPOSITORY.git
-git push -u origin main
-```
-
-Replace `YOUR-OWNER/YOUR-REPOSITORY`; this is an example, not a configured remote.
-If you prefer CLI creation after reviewing the staged contents:
-
-```powershell
-gh repo create YOUR-OWNER/YOUR-REPOSITORY --public --source . --remote origin --push
-```
-
-Use only one remote-creation method. Once connected, open **Actions** and confirm
-the first `CI` run finishes successfully.
-
-## 3. Protect publishing permissions in GitHub
+## 2. Protect publishing permissions in GitHub
 
 These are server settings, not things a YAML file or local branch can enforce.
 
@@ -90,14 +39,8 @@ These are server settings, not things a YAML file or local branch can enforce.
   `Dependency audit` checks from `CI`. Select checks after their first run.
   Require review by another maintainer when one is available. Block force pushes
   and branch deletion; keep the bypass list as small as possible.
-- Add a **tag ruleset** targeting `v*`: restrict tag creation to release
-  maintainers and prohibit tag updates/deletion. A tag pushed by someone with
-  sufficient access executes the workflow from that tag, so tag permissions are
-  a security boundary. Do not repoint a released tag.
-- **Settings > Code security**: enable Dependabot alerts, dependency graph,
-  available secret scanning/push protection, and private vulnerability reporting.
-  Dependabot PR schedules are supplied in `.github/dependabot.yml`.
 
+## 3. Pinning
 The repository pins every action by full commit SHA. Review Dependabot action
 updates, including what upstream commit is being trusted. Rust itself is pinned
 in `rust-toolchain.toml`; update it through a normal reviewed PR. Audit and license
@@ -152,10 +95,10 @@ The working tree should be clean before tagging. Push the tag explicitly; avoid
 The release workflow verifies that the commit is already on `main` and the tag
 matches `Cargo.toml`. It rebuilds from that checkout and uploads:
 
-- `AppLauncher-Setup-VERSION.exe`: per-user installer, Windows 11 minimum.
-- `AppLauncher-VERSION-windows-x64.zip`: portable executable, docs, examples,
+- `open-winapp-launcher-setup-VERSION.exe`: per-user installer, Windows 11 minimum.
+- `open-winapp-launcher-VERSION-windows-x64.zip`: portable executable, docs, examples,
   GPL text, original dependency notices, and generated dependency license inventory.
-- `AppLauncher-VERSION-source.zip`: corresponding committed source, vendored
+- `open-winapp-launcher-VERSION-source.zip`: corresponding committed source, vendored
   Cargo dependencies, and an offline Cargo source configuration.
 - `THIRD_PARTY_LICENSES.json` and `SHA256SUMS.txt`.
 

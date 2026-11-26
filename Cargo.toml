@@ -1,5 +1,5 @@
 [package]
-name = "app-launcher"
+name = "open-winapp-launcher"
 version = "0.1.0"
 edition = "2024"
 build = "build.rs"

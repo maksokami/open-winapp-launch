@@ -26,13 +26,13 @@ Or build the optimized executable and run it directly:
 rustup target add x86_64-pc-windows-msvc
 
 cargo build --locked --release --target x86_64-pc-windows-msvc
-.\target\x86_64-pc-windows-msvc\release\app-launcher.exe
+.\target\x86_64-pc-windows-msvc\release\open-winapp-launcher.exe
 ```
 
 On first launch, the app creates `%APPDATA%\AppLauncher\config.yaml` with example groups. It opens the launcher window; use **Ctrl+Alt+E** to hide or show it. Launching an app hides only the popup: the launcher stays running in the tray and can be reopened with the hotkey. Escape, the popup close button, and focus loss also hide rather than exit. Use **Exit** in the tray menu to stop the launcher. The tray icon menu also has **Open**, **Settings**, and **Edit config**. The Settings panel can enable startup when you sign in. To start directly in the tray without opening the window, pass `--background`:
 
 ```powershell
-.\target\x86_64-pc-windows-msvc\release\app-launcher.exe --background
+.\target\x86_64-pc-windows-msvc\release\open-winapp-launcher.exe --background
 ```
 
 The launcher has no minimize control. If Windows Show Desktop (Windows+D) hides or minimizes it, reopen it with **Ctrl+Alt+E** or tray **Open**; reopening restores the popup rather than leaving it minimized.
@@ -71,7 +71,7 @@ cargo build --locked --release --target x86_64-pc-windows-gnu
 Then run the executable from Windows PowerShell in the project directory:
 
 ```powershell
-.\target\x86_64-pc-windows-gnu\release\app-launcher.exe
+.\target\x86_64-pc-windows-gnu\release\open-winapp-launcher.exe
 ```
 
 The installer script expects an MSVC executable, so use the native Windows build or the Windows CI workflow when packaging.
@@ -101,7 +101,7 @@ cargo install cargo-bundle-licenses --version 5.0.0 --locked
 .\scripts\package.ps1
 ```
 
-For version 0.1.0, the installer is `dist\AppLauncher-Setup-0.1.0.exe`.
+For version 0.1.0, the installer is `dist\open-winapp-launcher-setup-0.1.0.exe`.
 It installs per-user without elevation; optional tasks add a desktop shortcut,
 enable startup, or launch the app after installation. Move any existing `dist`
 directory before packaging again. The release workflow runs these steps for

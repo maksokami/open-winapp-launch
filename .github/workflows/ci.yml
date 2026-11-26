@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows checks
+    runs-on: windows-2025
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchain
+        shell: pwsh
+        run: |
+          rustup show active-toolchain
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Test
+        run: cargo test --locked --all-targets
+      - name: Lint
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Enforce immutable actions and safe PR triggers
+        shell: pwsh
+        run: |
+          Get-ChildItem .github\workflows\*.yml | ForEach-Object {
+            $content = Get-Content $_ -Raw
+            if ($content -match 'pull_request_target:') { throw "Privileged PR trigger is not allowed" }
+            foreach ($match in [regex]::Matches($content, '(?m)^\s*-?\s*uses:\s*(\S+)')) {
+              if ($match.Groups[1].Value -notmatch '^[^@\s]+@[0-9a-f]{40}$') {
+                throw "Action must be pinned to a full commit SHA: $($match.Value)"
+              }
+            }
+          }
+
+  dependencies:
+    name: Dependency audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install audit tool
+        run: cargo install cargo-audit --version 0.23.0 --locked
+      - name: Check published Rust security advisories
+        run: cargo audit

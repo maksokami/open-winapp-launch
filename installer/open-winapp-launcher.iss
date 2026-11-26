@@ -3,7 +3,7 @@
 #endif
 
 #define AppName "App Launcher"
-#define AppExe "app-launcher.exe"
+#define AppExe "open-winapp-launcher.exe"
 
 [Setup]
 AppId={{39B9FA77-EFEB-4E0B-8758-D4B647A7B755}
@@ -18,7 +18,7 @@ ArchitecturesInstallIn64BitMode=x64
 CloseApplications=yes
 RestartApplications=no
 OutputDir=..\dist
-OutputBaseFilename=AppLauncher-Setup-{#AppVersion}
+OutputBaseFilename=open-winapp-launcher-setup-{#AppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
