@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 anyhow = "1"
-dirs = "6"
+dirs = "7"
 image = { version = "0.25", default-features = false, features = ["ico", "png", "jpeg"] }
 notify = "9"
 serde = { version = "1", features = ["derive"] }
