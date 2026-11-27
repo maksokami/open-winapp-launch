@@ -73,7 +73,7 @@ fn parse(spec: &str) -> Result<HotKey> {
             "ctrl" | "control" => modifiers |= Modifiers::CONTROL,
             "alt" => modifiers |= Modifiers::ALT,
             "shift" => modifiers |= Modifiers::SHIFT,
-            "win" | "super" => modifiers |= Modifiers::SUPER,
+            "win" | "super" => modifiers |= Modifiers::META,
             token => {
                 if key.is_some() {
                     bail!("hotkey must contain exactly one non-modifier key");
